@@ -22,7 +22,7 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
-type ToolInput = z.infer<typeof ToolInputSchema>;
+type ToolInput = typeof ToolInputSchema["_output"];
 
 /* Input schemas for tools implemented in this server */
 const EchoSchema = z.object({
@@ -534,7 +534,10 @@ export const createServer = () => {
       );
       return {
         content: [
-          { type: "text", text: `LLM sampling result: ${result.content.text}` },
+          {
+            type: "text",
+            text: `LLM sampling result: ${result.content.type === "text" ? result.content.text : `[${result.content.type} content]`}`,
+          },
         ],
       };
     }

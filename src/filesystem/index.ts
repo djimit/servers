@@ -147,7 +147,7 @@ const GetFileInfoArgsSchema = z.object({
 });
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
-type ToolInput = z.infer<typeof ToolInputSchema>;
+type ToolInput = typeof ToolInputSchema["_output"];
 
 interface FileInfo {
   size: number;
