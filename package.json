@@ -19,6 +19,7 @@
     "link-all": "npm link --workspaces"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@modelcontextprotocol/server-everything": "*",
     "@modelcontextprotocol/server-gdrive": "*",
     "@modelcontextprotocol/server-postgres": "*",
@@ -31,15 +32,19 @@
     "@modelcontextprotocol/server-sequential-thinking": "*"
   },
   "overrides": {
+    "@modelcontextprotocol/sdk": "$@modelcontextprotocol/sdk",
     "@hono/node-server": "^2.0.5",
-    "axios": "^1.18.0",
+    "axios": "^1.20.0",
+    "basic-ftp": "^6.2.1",
     "body-parser": "^2.3.0",
-    "brace-expansion": "^5.0.8",
-    "fast-uri": "^3.1.7",
+    "brace-expansion": "^5.0.12",
+    "fast-uri": "^3.1.8",
     "form-data": "^4.0.6",
-    "hono": "^4.12.27",
-    "js-yaml": "^4.3.0",
+    "hono": "^4.13.7",
+    "ip-address": "^10.7.1",
+    "js-yaml": "^4.3.2",
     "proxy-addr": "^2.0.8",
+    "uuid": "11.1.1",
     "ws": "^8.21.0"
   }
 }
