@@ -144,7 +144,8 @@ def git_show(repo: git.Repo, revision: str) -> str:
         diff = commit.diff(git.NULL_TREE, create_patch=True)
     for d in diff:
         output.append(f"\n--- {d.a_path}\n+++ {d.b_path}\n")
-        output.append(d.diff.decode('utf-8'))
+        patch = d.diff
+        output.append(patch.decode('utf-8') if isinstance(patch, bytes) else patch or '')
     return "".join(output)
 
 async def serve(repository: Path | None) -> None:

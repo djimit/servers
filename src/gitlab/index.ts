@@ -8,7 +8,9 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import fetch from "node-fetch";
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+
+
+
 import {
   GitLabForkSchema,
   GitLabReferenceSchema,
@@ -45,6 +47,17 @@ import {
   type GitLabCommit,
   type FileOperation,
 } from './schemas.js';
+
+function zodToJsonSchema(schema: z.ZodType) {
+  return z.toJSONSchema(schema, {
+    target: "draft-7",
+    io: "input",
+    override: ({ zodSchema, jsonSchema }) => {
+      if (zodSchema instanceof z.ZodObject) jsonSchema.additionalProperties = false;
+    },
+  });
+}
+
 
 const server = new Server({
   name: "gitlab-mcp-server",
@@ -500,7 +513,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`Invalid arguments: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
+      throw new Error(`Invalid arguments: ${error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`);
     }
     throw error;
   }

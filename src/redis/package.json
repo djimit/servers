@@ -23,7 +23,7 @@
     "@types/node": "^22.10.2",
     "@types/redis": "^4.0.10",
     "redis": "^4.7.0",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "shx": "^0.3.4",

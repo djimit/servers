@@ -23,8 +23,7 @@
     "diff": "^5.1.0",
     "glob": ">=10.5.0",
     "minimatch": ">=9.0.7",
-    "zod": "^3.25.76",
-    "zod-to-json-schema": "^3.23.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/diff": "^5.0.9",

@@ -11,9 +11,20 @@ import fs from "fs/promises";
 import path from "path";
 import os from 'os';
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
+
 import { diffLines, createTwoFilesPatch } from 'diff';
 import { minimatch } from 'minimatch';
+
+function zodToJsonSchema(schema: z.ZodType) {
+  return z.toJSONSchema(schema, {
+    target: "draft-7",
+    io: "input",
+    override: ({ zodSchema, jsonSchema }) => {
+      if (zodSchema instanceof z.ZodObject) jsonSchema.additionalProperties = false;
+    },
+  });
+}
+
 
 // Command line argument parsing
 const args = process.argv.slice(2);
@@ -116,7 +127,7 @@ const EditOperation = z.object({
 const EditFileArgsSchema = z.object({
   path: z.string(),
   edits: z.array(EditOperation),
-  dryRun: z.boolean().default(false).describe('Preview changes using git-style diff format')
+  dryRun: z.boolean().prefault(false).describe('Preview changes using git-style diff format')
 });
 
 const CreateDirectoryArgsSchema = z.object({
@@ -139,7 +150,7 @@ const MoveFileArgsSchema = z.object({
 const SearchFilesArgsSchema = z.object({
   path: z.string(),
   pattern: z.string(),
-  excludePatterns: z.array(z.string()).optional().default([])
+  excludePatterns: z.array(z.string()).optional().prefault([])
 });
 
 const GetFileInfoArgsSchema = z.object({
