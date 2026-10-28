@@ -4,7 +4,7 @@ version = "0.6.2"
 description = "MCP server for retrieving issues from sentry.io"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["mcp>=1.0.0"]
+dependencies = ["mcp>=1.30,<2", "click>=8.1.7,<9", "httpx>=0.28.1,<0.29"]
 
 [build-system]
 requires = ["hatchling"]

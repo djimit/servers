@@ -5,7 +5,7 @@ description = "A simple SQLite MCP server"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp[cli]>=1.6.0",
+    "mcp[cli]>=1.30,<2",
 ]
 
 [build-system]

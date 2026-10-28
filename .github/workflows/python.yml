@@ -53,6 +53,11 @@ jobs:
         working-directory: src/${{ matrix.package }}
         run: uv build
 
+      - name: Run owning regression tests
+        if: contains(fromJSON('["git", "time", "sentry"]'), matrix.package)
+        working-directory: src/${{ matrix.package }}
+        run: uv run --frozen pytest -q
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

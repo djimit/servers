@@ -16,8 +16,9 @@ const stable = value => Array.isArray(value) ? value.map(stable) : value && type
 for (const name of Object.keys(expected)) {
   test(name + ' preserves its public tool-schema contract over local stdio', async () => {
     const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'mcp-contract-'));
-    const allowed = path.join(temporary, 'allowed');
-    await fs.mkdir(allowed);
+    const created = path.join(temporary, 'allowed');
+    await fs.mkdir(created);
+    const allowed = await fs.realpath(created);
     const entry = path.join(root, 'src', name, 'dist', 'index.js');
     const client = new Client({ name: 'local-contract-control', version: '1.0.0' });
     const transport = new StdioClientTransport({
