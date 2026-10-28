@@ -19,7 +19,20 @@ import {
   UnsubscribeRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
+
+function zodToJsonSchema(schema: z.ZodType) {
+  return z.toJSONSchema(schema, {
+    target: "draft-7",
+    io: "input",
+    override: ({ zodSchema, jsonSchema }) => {
+      if (zodSchema instanceof z.ZodObject) jsonSchema.additionalProperties = false;
+    },
+  });
+}
+
+
+
+
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 type ToolInput = typeof ToolInputSchema["_output"];
@@ -37,9 +50,9 @@ const AddSchema = z.object({
 const LongRunningOperationSchema = z.object({
   duration: z
     .number()
-    .default(10)
+    .prefault(10)
     .describe("Duration of the operation in seconds"),
-  steps: z.number().default(5).describe("Number of steps in the operation"),
+  steps: z.number().prefault(5).describe("Number of steps in the operation"),
 });
 
 const PrintEnvSchema = z.object({});
@@ -48,7 +61,7 @@ const SampleLLMSchema = z.object({
   prompt: z.string().describe("The prompt to send to the LLM"),
   maxTokens: z
     .number()
-    .default(100)
+    .prefault(100)
     .describe("Maximum number of tokens to generate"),
 });
 
@@ -67,7 +80,7 @@ const AnnotatedMessageSchema = z.object({
     .describe("Type of message to demonstrate different annotation patterns"),
   includeImage: z
     .boolean()
-    .default(false)
+    .prefault(false)
     .describe("Whether to include an example image"),
 });
 

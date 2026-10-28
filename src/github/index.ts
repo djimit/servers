@@ -6,7 +6,9 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+
+
+
 import fetch, { Request, Response } from 'node-fetch';
 
 import * as repository from './operations/repository.js';
@@ -27,6 +29,17 @@ import {
   isGitHubError,
 } from './common/errors.js';
 import { VERSION } from "./common/version.js";
+
+function zodToJsonSchema(schema: z.ZodType) {
+  return z.toJSONSchema(schema, {
+    target: "draft-7",
+    io: "input",
+    override: ({ zodSchema, jsonSchema }) => {
+      if (zodSchema instanceof z.ZodObject) jsonSchema.additionalProperties = false;
+    },
+  });
+}
+
 
 // If fetch doesn't exist in global scope, add it
 if (!globalThis.fetch) {
@@ -496,7 +509,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new Error(`Invalid input: ${JSON.stringify(error.errors)}`);
+      throw new Error(`Invalid input: ${JSON.stringify(error.issues)}`);
     }
     if (isGitHubError(error)) {
       throw new Error(formatGitHubError(error));
