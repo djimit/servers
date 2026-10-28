@@ -8,12 +8,10 @@ import {
   ToolSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs/promises";
+import { createPathValidator, readFileSafely, writeFileAtomically } from "./path-safety.js";
 import path from "path";
 import os from 'os';
 import { z } from "zod";
-
-import { diffLines, createTwoFilesPatch } from 'diff';
-import { minimatch } from 'minimatch';
 
 function zodToJsonSchema(schema: z.ZodType) {
   return z.toJSONSchema(schema, {
@@ -25,6 +23,8 @@ function zodToJsonSchema(schema: z.ZodType) {
   });
 }
 
+import { diffLines, createTwoFilesPatch } from 'diff';
+import { minimatch } from 'minimatch';
 
 // Command line argument parsing
 const args = process.argv.slice(2);
@@ -64,45 +64,9 @@ await Promise.all(args.map(async (dir) => {
   }
 }));
 
-// Security utilities
+const validateResolvedPath = await createPathValidator(allowedDirectories);
 async function validatePath(requestedPath: string): Promise<string> {
-  const expandedPath = expandHome(requestedPath);
-  const absolute = path.isAbsolute(expandedPath)
-    ? path.resolve(expandedPath)
-    : path.resolve(process.cwd(), expandedPath);
-
-  const normalizedRequested = normalizePath(absolute);
-
-  // Check if path is within allowed directories
-  const isAllowed = allowedDirectories.some(dir => normalizedRequested.startsWith(dir));
-  if (!isAllowed) {
-    throw new Error(`Access denied - path outside allowed directories: ${absolute} not in ${allowedDirectories.join(', ')}`);
-  }
-
-  // Handle symlinks by checking their real path
-  try {
-    const realPath = await fs.realpath(absolute);
-    const normalizedReal = normalizePath(realPath);
-    const isRealPathAllowed = allowedDirectories.some(dir => normalizedReal.startsWith(dir));
-    if (!isRealPathAllowed) {
-      throw new Error("Access denied - symlink target outside allowed directories");
-    }
-    return realPath;
-  } catch (error) {
-    // For new files that don't exist yet, verify parent directory
-    const parentDir = path.dirname(absolute);
-    try {
-      const realParentPath = await fs.realpath(parentDir);
-      const normalizedParent = normalizePath(realParentPath);
-      const isParentAllowed = allowedDirectories.some(dir => normalizedParent.startsWith(dir));
-      if (!isParentAllowed) {
-        throw new Error("Access denied - parent directory outside allowed directories");
-      }
-      return absolute;
-    } catch {
-      throw new Error(`Parent directory does not exist: ${parentDir}`);
-    }
-  }
+  return validateResolvedPath(expandHome(requestedPath));
 }
 
 // Schema definitions
@@ -269,7 +233,7 @@ async function applyFileEdits(
   dryRun = false
 ): Promise<string> {
   // Read file content and normalize line endings
-  const content = normalizeLineEndings(await fs.readFile(filePath, 'utf-8'));
+  const content = normalizeLineEndings(await readFileSafely(filePath));
 
   // Apply edits sequentially
   let modifiedContent = content;
@@ -335,7 +299,7 @@ async function applyFileEdits(
   const formattedDiff = `${'`'.repeat(numBackticks)}diff\n${diff}${'`'.repeat(numBackticks)}\n\n`;
 
   if (!dryRun) {
-    await fs.writeFile(filePath, modifiedContent, 'utf-8');
+    await writeFileAtomically(filePath, modifiedContent);
   }
 
   return formattedDiff;
@@ -462,7 +426,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error(`Invalid arguments for read_file: ${parsed.error}`);
         }
         const validPath = await validatePath(parsed.data.path);
-        const content = await fs.readFile(validPath, "utf-8");
+        const content = await readFileSafely(validPath);
         return {
           content: [{ type: "text", text: content }],
         };
@@ -477,7 +441,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           parsed.data.paths.map(async (filePath: string) => {
             try {
               const validPath = await validatePath(filePath);
-              const content = await fs.readFile(validPath, "utf-8");
+              const content = await readFileSafely(validPath);
               return `${filePath}:\n${content}\n`;
             } catch (error) {
               const errorMessage = error instanceof Error ? error.message : String(error);
@@ -496,7 +460,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error(`Invalid arguments for write_file: ${parsed.error}`);
         }
         const validPath = await validatePath(parsed.data.path);
-        await fs.writeFile(validPath, parsed.data.content, "utf-8");
+        await writeFileAtomically(validPath, parsed.data.content);
         return {
           content: [{ type: "text", text: `Successfully wrote to ${parsed.data.path}` }],
         };
