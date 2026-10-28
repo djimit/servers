@@ -150,7 +150,7 @@ async def handle_sentry_issue(
         )
         if response.status_code == 401:
             raise McpError(
-                "Error: Unauthorized. Please check your MCP_SENTRY_AUTH_TOKEN token."
+                types.ErrorData(code=types.INTERNAL_ERROR, message="Error: Unauthorized. Please check your MCP_SENTRY_AUTH_TOKEN token.")
             )
         response.raise_for_status()
         issue_data = response.json()
@@ -164,7 +164,7 @@ async def handle_sentry_issue(
         hashes = hashes_response.json()
 
         if not hashes:
-            raise McpError("No Sentry events found for this issue")
+            raise McpError(types.ErrorData(code=types.INTERNAL_ERROR, message="No Sentry events found for this issue"))
 
         latest_event = hashes[0]["latestEvent"]
         stacktrace = create_stacktrace(latest_event)
@@ -180,12 +180,14 @@ async def handle_sentry_issue(
             stacktrace=stacktrace
         )
 
+    except McpError:
+        raise
     except SentryError as e:
-        raise McpError(str(e))
+        raise McpError(types.ErrorData(code=types.INVALID_PARAMS, message=str(e)))
     except httpx.HTTPStatusError as e:
-        raise McpError(f"Error fetching Sentry issue: {str(e)}")
+        raise McpError(types.ErrorData(code=types.INTERNAL_ERROR, message=f"Error fetching Sentry issue: {str(e)}"))
     except Exception as e:
-        raise McpError(f"An error occurred: {str(e)}")
+        raise McpError(types.ErrorData(code=types.INTERNAL_ERROR, message=f"An error occurred: {str(e)}"))
 
 
 async def serve(auth_token: str) -> Server:
